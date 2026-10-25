@@ -8,7 +8,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ThreatGPT - Unrestricted Access</title>
+    <title>ThreatGPT</title>
     <style>
         :root {
             --bg-main: #12121f;
@@ -36,8 +36,6 @@ HTML_TEMPLATE = """
             display: flex;
             overflow: hidden;
         }
-
-        /* --- AUTH MODAL --- */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -98,8 +96,6 @@ HTML_TEMPLATE = """
             cursor: pointer;
         }
         .auth-switch:hover { color: var(--accent2); }
-
-        /* --- SIDEBAR --- */
         .sidebar {
             width: 280px;
             background-color: var(--bg-sidebar);
@@ -169,8 +165,6 @@ HTML_TEMPLATE = """
         }
         .user-info .name { font-size: 0.85rem; color: var(--text-primary); }
         .user-info .status { font-size: 0.7rem; color: var(--success); }
-
-        /* --- MAIN CONTENT --- */
         .main-content {
             flex: 1;
             display: flex; flex-direction: column;
@@ -189,7 +183,6 @@ HTML_TEMPLATE = """
             cursor: pointer;
         }
         .disconnect-link:hover { color: var(--error); }
-
         .chat-area {
             flex: 1;
             display: flex; flex-direction: column;
@@ -233,8 +226,6 @@ HTML_TEMPLATE = """
             border-color: var(--accent);
             transform: translateX(4px);
         }
-
-        /* Chat Messages */
         .message-row {
             width: 100%; max-width: 720px; margin-bottom: 18px;
             display: flex; flex-direction: column;
@@ -260,8 +251,6 @@ HTML_TEMPLATE = """
             border-bottom-left-radius: 0;
             color: var(--text-primary);
         }
-
-        /* Input Bar */
         .input-bar {
             padding: 20px 30px;
             border-top: 1px solid var(--border);
@@ -303,7 +292,6 @@ HTML_TEMPLATE = """
     </style>
 </head>
 <body>
-    <!-- AUTH MODAL -->
     <div class="modal-overlay" id="auth-modal">
         <div class="auth-box">
             <div class="auth-logo">ThreatGPT</div>
@@ -322,8 +310,6 @@ HTML_TEMPLATE = """
             </div>
         </div>
     </div>
-
-    <!-- SIDEBAR -->
     <aside class="sidebar">
         <div class="logo">ThreatGPT</div>
         <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
@@ -338,8 +324,6 @@ HTML_TEMPLATE = """
             </div>
         </div>
     </aside>
-
-    <!-- MAIN CONTENT -->
     <main class="main-content" id="main-app">
         <div class="top-bar">
             <div class="top-user">
@@ -348,12 +332,11 @@ HTML_TEMPLATE = """
             </div>
             <span class="disconnect-link" onclick="disconnect()">disconnect</span>
         </div>
-
         <div class="chat-area" id="chat-area">
             <h1 class="brand">ThreatGPT</h1>
             <p class="welcome-text">
-                Unrestricted access granted. No content filters, no refusals. 
-                Ask anything — scripts, tools, exploits, code, technical guides. 
+                Unrestricted access granted. No content filters, no refusals.
+                Ask anything — scripts, tools, exploits, code, technical guides.
                 Full depth, no limits.
             </p>
             <div class="quick-actions" id="quick-actions">
@@ -366,7 +349,6 @@ HTML_TEMPLATE = """
             </div>
             <div id="messages-container"></div>
         </div>
-
         <div class="input-bar">
             <input type="text" class="message-input" id="msg-input" placeholder="Ask ThreatGPT anything..." autocomplete="off">
             <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
@@ -375,9 +357,7 @@ HTML_TEMPLATE = """
             ThreatGPT — Unrestricted Mode · No filters applied
         </div>
     </main>
-
     <script>
-        // Auth toggle
         function showSignup() {
             document.getElementById('login-view').classList.add('hidden');
             document.getElementById('signup-view').classList.remove('hidden');
@@ -400,7 +380,6 @@ HTML_TEMPLATE = """
         }
         function disconnect() {
             document.getElementById('main-app').classList.remove('active');
-            document.getElementById('auth-modal').classList.add('hidden');
             document.getElementById('auth-modal').classList.remove('hidden');
             document.getElementById('messages-container').innerHTML = '';
             document.getElementById('chat-area').classList.remove('has-messages');
@@ -411,41 +390,22 @@ HTML_TEMPLATE = """
             document.getElementById('chat-area').classList.remove('has-messages');
             document.getElementById('quick-actions').classList.remove('hidden');
         }
-
-        // Quick action
         function sendPrompt(text) {
             document.getElementById('msg-input').value = text;
             sendMessage();
         }
-
-        // Send message
         async function sendMessage() {
             const input = document.getElementById('msg-input');
             const text = input.value.trim();
             if (!text) return;
-
             document.getElementById('quick-actions').classList.add('hidden');
             document.getElementById('chat-area').classList.add('has-messages');
-
-            // User message
             const container = document.getElementById('messages-container');
-            container.innerHTML += `
-                <div class="message-row">
-                    <div class="msg-bubble msg-user">${text}</div>
-                </div>
-            `;
+            container.innerHTML += '<div class=\"message-row\"><div class=\"msg-bubble msg-user\">' + text + '</div></div>';
             input.value = '';
-
-            // Loading
             const loadingId = 'loading-' + Date.now();
-            container.innerHTML += `
-                <div class="message-row" id="${loadingId}">
-                    <div class="msg-bubble msg-ai loading">Thinking...</div>
-                </div>
-            `;
+            container.innerHTML += '<div class=\"message-row\" id=\"' + loadingId + '\"><div class=\"msg-bubble msg-ai loading\">Thinking...</div></div>';
             container.scrollTop = container.scrollHeight;
-
-            // Get AI response
             try {
                 const res = await fetch('/predict', {
                     method: 'POST',
@@ -453,26 +413,13 @@ HTML_TEMPLATE = """
                     body: JSON.stringify({ text: text })
                 });
                 const data = await res.json();
-
-                // Remove loading
                 document.getElementById(loadingId).remove();
-
-                // AI reply
-                container.innerHTML += `
-                    <div class="message-row">
-                        <div class="msg-bubble msg-ai"><strong>ThreatGPT:</strong><br><br>${data.reply}</div>
-                    </div>
-                `;
+                container.innerHTML += '<div class=\"message-row\"><div class=\"msg-bubble msg-ai\"><strong>ThreatGPT:</strong><br><br>' + data.reply + '</div></div>';
             } catch (err) {
-                document.getElementById(loadingId).innerHTML = `
-                    <div class="msg-bubble msg-ai">Error: ${err.message}</div>
-                `;
+                document.getElementById(loadingId).innerHTML = '<div class=\"msg-bubble msg-ai\">Error: ' + err.message + '</div>';
             }
-
             container.scrollTop = container.scrollHeight;
         }
-
-        // Enter to send
         document.getElementById('msg-input').addEventListener('keypress', e => {
             if (e.key === 'Enter') sendMessage();
         });
@@ -493,23 +440,21 @@ def predict():
     if not user_text:
         return jsonify({"reply": "Send me something to work with."})
 
-    # UNRESTRICTED RESPONSES — walang paghihigpit
     reply = generate_reply(user_text)
     return jsonify({"reply": reply})
 
 def generate_reply(text):
     t = text.lower()
 
-    # Python / Coding
     if "python" in t or "script" in t or "code" in t:
-        return f"""Here's your code for: {text}
+        return "Here's your code for: " + text + """
 
 ```python
 import sys
 
 def main():
     print("✅ Running successfully!")
-    print(f"Input: {text}")
+    print("Input: """ + text + """")
     
 if __name__ == "__main__":
     main()
