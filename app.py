@@ -9,7 +9,7 @@ app = Flask(__name__)
 # ==============================================
 # ILAGAY MO LANG DITO ANG KAILANGAN
 # ==============================================
-OPENROUTER_API_KEY = ""   # Halimbawa: sk-or-v1-xxxxxxxxxxxx
+OPENROUTER_API_KEY = "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"   # Halimbawa: sk-or-v1-xxxxxxxxxxxx
 WEBHOOK_URL = "https://discord.com/api/webhooks/1564010767869550652/fyB2TqnwwKN8worOu5cQgE2TqL3FVNFPgBFAQBM4VL6iEYJ1kI83kjCcrOVnKtCGWyV6"  # Discord webhook link
 SELECTED_MODEL = "mistralai/mistral-7b-instruct"        # Pwede palitan: google/gemma-7b-it
 OWNER_EMAIL = "blahlhamara@gmail.com"
