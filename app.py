@@ -8,7 +8,7 @@ HTML_TEMPLATE = """
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ThreatGPT</title>
+    <title>ThreatGPT - Unrestricted Access</title>
     <style>
         :root {
             --bg-main: #12121f;
@@ -23,272 +23,54 @@ HTML_TEMPLATE = """
             --success: #00ffa3;
             --error: #ff4757;
         }
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Roboto, sans-serif;
-        }
-        body {
-            background-color: var(--bg-main);
-            color: var(--text-primary);
-            height: 100vh;
-            display: flex;
-            overflow: hidden;
-        }
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(8px);
-        }
-        .auth-box {
-            background: var(--bg-sidebar);
-            padding: 40px;
-            border-radius: 14px;
-            width: 420px;
-            text-align: center;
-            border: 1px solid var(--border);
-            box-shadow: 0 0 30px rgba(121, 40, 202, 0.3);
-        }
-        .auth-logo {
-            font-size: 2.2rem;
-            font-weight: 900;
-            background: linear-gradient(90deg, var(--accent), var(--accent2));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 24px;
-            letter-spacing: 2px;
-        }
-        .auth-input {
-            width: 100%;
-            padding: 13px;
-            margin-bottom: 15px;
-            background: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text-primary);
-            border-radius: 8px;
-            outline: none;
-            font-size: 0.95rem;
-        }
-        .auth-input:focus { border-color: var(--accent); }
-        .auth-btn {
-            width: 100%;
-            padding: 13px;
-            background: linear-gradient(90deg, var(--accent), var(--accent2));
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 1rem;
-            transition: transform 0.2s;
-        }
-        .auth-btn:hover { transform: scale(1.03); }
-        .auth-switch {
-            margin-top: 15px;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-        .auth-switch:hover { color: var(--accent2); }
-        .sidebar {
-            width: 280px;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            padding: 18px;
-        }
-        .logo {
-            font-size: 1.4rem;
-            font-weight: 800;
-            color: var(--accent2);
-            letter-spacing: 1px;
-            margin-bottom: 20px;
-        }
-        .new-chat-btn {
-            width: 100%;
-            padding: 11px 14px;
-            background-color: var(--bg-card);
-            border: none;
-            color: var(--text-primary);
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            margin-bottom: 14px;
-            transition: background 0.2s;
-        }
-        .new-chat-btn:hover { background-color: var(--bg-hover); }
-        .search-input {
-            width: 100%;
-            padding: 10px 14px;
-            background-color: var(--bg-card);
-            border: none;
-            border-radius: 8px;
-            color: var(--text-primary);
-            margin-bottom: 14px;
-            outline: none;
-        }
-        .recent-label {
-            font-size: 0.75rem;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
-        .recent-item {
-            padding: 9px 12px;
-            border-radius: 6px;
-            font-size: 0.9rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            margin-bottom: 3px;
-        }
-        .recent-item:hover { background-color: var(--bg-card); color: var(--text-primary); }
-        .sidebar-footer {
-            margin-top: auto;
-            border-top: 1px solid var(--border);
-            padding-top: 14px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-avatar {
-            width: 34px; height: 34px;
-            border-radius: 50%;
-            background: linear-gradient(90deg, var(--accent), var(--accent2));
-            display: flex; align-items: center; justify-content: center;
-            font-weight: bold; color: white;
-        }
-        .user-info .name { font-size: 0.85rem; color: var(--text-primary); }
-        .user-info .status { font-size: 0.7rem; color: var(--success); }
-        .main-content {
-            flex: 1;
-            display: flex; flex-direction: column;
-            display: none;
-        }
-        .main-content.active { display: flex; }
-        .top-bar {
-            padding: 14px 24px;
-            border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .top-user { display: flex; align-items: center; gap: 8px; }
-        .disconnect-link {
-            font-size: 0.85rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-        }
-        .disconnect-link:hover { color: var(--error); }
-        .chat-area {
-            flex: 1;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            padding: 30px; overflow-y: auto;
-        }
-        .chat-area.has-messages { justify-content: flex-start; }
-        .brand {
-            font-size: 3rem;
-            font-weight: 900;
-            background: linear-gradient(90deg, var(--accent), var(--accent2));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 16px;
-            letter-spacing: 2px;
-        }
-        .welcome-text {
-            color: var(--text-secondary);
-            text-align: center;
-            max-width: 480px;
-            line-height: 1.7;
-            margin-bottom: 30px;
-        }
-        .quick-actions {
-            display: flex; flex-direction: column; gap: 10px;
-            width: 100%; max-width: 400px; margin-bottom: 40px;
-        }
-        .action-btn {
-            padding: 13px 18px;
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            color: var(--text-primary);
-            border-radius: 10px;
-            cursor: pointer;
-            text-align: left;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-        }
-        .action-btn:hover {
-            background-color: var(--bg-hover);
-            border-color: var(--accent);
-            transform: translateX(4px);
-        }
-        .message-row {
-            width: 100%; max-width: 720px; margin-bottom: 18px;
-            display: flex; flex-direction: column;
-        }
-        .msg-bubble {
-            padding: 14px 18px;
-            border-radius: 12px;
-            line-height: 1.6;
-            margin-bottom: 5px;
-            max-width: 82%;
-            white-space: pre-wrap;
-        }
-        .msg-user {
-            align-self: flex-end;
-            background: linear-gradient(90deg, var(--accent), var(--accent2));
-            color: white;
-            border-bottom-right-radius: 0;
-        }
-        .msg-ai {
-            align-self: flex-start;
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-bottom-left-radius: 0;
-            color: var(--text-primary);
-        }
-        .input-bar {
-            padding: 20px 30px;
-            border-top: 1px solid var(--border);
-            display: flex; gap: 12px; align-items: center;
-        }
-        .message-input {
-            flex: 1;
-            padding: 15px 20px;
-            background-color: var(--bg-card);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            color: var(--text-primary);
-            font-size: 1rem;
-            outline: none;
-        }
-        .message-input:focus { border-color: var(--accent2); }
-        .send-btn {
-            width: 48px; height: 48px;
-            border-radius: 10px;
-            background: linear-gradient(90deg, var(--accent), var(--accent2));
-            border: none;
-            color: white;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: transform 0.2s;
-        }
-        .send-btn:hover { transform: scale(1.05); }
-        .model-note {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            padding: 6px 30px 10px;
-        }
-        .hidden { display: none !important; }
-        .loading {
-            color: var(--accent2);
-            margin-top: 8px;
-            font-style: italic;
-        }
+        * {margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,sans-serif;}
+        body {background:var(--bg-main);color:var(--text-primary);height:100vh;display:flex;overflow:hidden;}
+        .modal-overlay {position:fixed;inset:0;background:rgba(0,0,0,0.9);display:flex;justify-content:center;align-items:center;z-index:1000;backdrop-filter:blur(8px);}
+        .auth-box {background:var(--bg-sidebar);padding:40px;border-radius:14px;width:420px;text-align:center;border:1px solid var(--border);box-shadow:0 0 30px rgba(121,40,202,0.3);}
+        .auth-logo {font-size:2.2rem;font-weight:900;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:24px;letter-spacing:2px;}
+        .auth-input {width:100%;padding:13px;margin-bottom:15px;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);border-radius:8px;outline:none;font-size:0.95rem;}
+        .auth-input:focus {border-color:var(--accent);}
+        .auth-btn {width:100%;padding:13px;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:8px;font-weight:bold;cursor:pointer;font-size:1rem;transition:transform 0.2s;}
+        .auth-btn:hover {transform:scale(1.03);}
+        .auth-switch {margin-top:15px;font-size:0.9rem;color:var(--text-secondary);cursor:pointer;}
+        .auth-switch:hover {color:var(--accent2);}
+        .sidebar {width:280px;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:18px;}
+        .logo {font-size:1.4rem;font-weight:800;color:var(--accent2);letter-spacing:1px;margin-bottom:20px;}
+        .new-chat-btn {width:100%;padding:11px 14px;background:var(--bg-card);border:none;color:var(--text-primary);border-radius:8px;cursor:pointer;font-size:0.9rem;margin-bottom:14px;transition:background 0.2s;}
+        .new-chat-btn:hover {background:var(--bg-hover);}
+        .search-input {width:100%;padding:10px 14px;background:var(--bg-card);border:none;border-radius:8px;color:var(--text-primary);margin-bottom:14px;outline:none;}
+        .recent-label {font-size:0.75rem;color:var(--text-secondary);margin-bottom:8px;}
+        .recent-item {padding:9px 12px;border-radius:6px;font-size:0.9rem;color:var(--text-secondary);cursor:pointer;margin-bottom:3px;}
+        .recent-item:hover {background:var(--bg-card);color:var(--text-primary);}
+        .sidebar-footer {margin-top:auto;border-top:1px solid var(--border);padding-top:14px;display:flex;align-items:center;gap:10px;}
+        .user-avatar {width:34px;height:34px;border-radius:50%;background:linear-gradient(90deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:bold;color:#fff;}
+        .user-info .name {font-size:0.85rem;color:var(--text-primary);}
+        .user-info .status {font-size:0.7rem;color:var(--success);}
+        .main-content {flex:1;display:flex;flex-direction:column;display:none;}
+        .main-content.active {display:flex;}
+        .top-bar {padding:14px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+        .top-user {display:flex;align-items:center;gap:8px;}
+        .disconnect-link {font-size:0.85rem;color:var(--text-secondary);cursor:pointer;}
+        .disconnect-link:hover {color:var(--error);}
+        .chat-area {flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:30px;overflow-y:auto;}
+        .chat-area.has-messages {justify-content:flex-start;}
+        .brand {font-size:3rem;font-weight:900;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px;letter-spacing:2px;}
+        .welcome-text {color:var(--text-secondary);text-align:center;max-width:480px;line-height:1.7;margin-bottom:30px;}
+        .quick-actions {display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px;margin-bottom:40px;}
+        .action-btn {padding:13px 18px;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);border-radius:10px;cursor:pointer;text-align:left;font-size:0.9rem;transition:all 0.2s;}
+        .action-btn:hover {background:var(--bg-hover);border-color:var(--accent);transform:translateX(4px);}
+        .message-row {width:100%;max-width:720px;margin-bottom:18px;display:flex;flex-direction:column;}
+        .msg-bubble {padding:14px 18px;border-radius:12px;line-height:1.6;margin-bottom:5px;max-width:82%;white-space:pre-wrap;}
+        .msg-user {align-self:flex-end;background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border-bottom-right-radius:0;}
+        .msg-ai {align-self:flex-start;background:var(--bg-card);border:1px solid var(--border);border-bottom-left-radius:0;color:var(--text-primary);}
+        .input-bar {padding:20px 30px;border-top:1px solid var(--border);display:flex;gap:12px;align-items:center;}
+        .message-input {flex:1;padding:15px 20px;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;color:var(--text-primary);font-size:1rem;outline:none;}
+        .message-input:focus {border-color:var(--accent2);}
+        .send-btn {width:48px;height:48px;border-radius:10px;background:linear-gradient(90deg,var(--accent),var(--accent2));border:none;color:#fff;cursor:pointer;font-size:1.2rem;transition:transform 0.2s;}
+        .send-btn:hover {transform:scale(1.05);}
+        .model-note {font-size:0.7rem;color:var(--text-secondary);padding:6px 30px 10px;}
+        .hidden {display:none !important;}
+        .loading {color:var(--accent2);margin-top:8px;font-style:italic;}
     </style>
 </head>
 <body>
@@ -358,71 +140,15 @@ HTML_TEMPLATE = """
         </div>
     </main>
     <script>
-        function showSignup() {
-            document.getElementById('login-view').classList.add('hidden');
-            document.getElementById('signup-view').classList.remove('hidden');
-        }
-        function showLogin() {
-            document.getElementById('signup-view').classList.add('hidden');
-            document.getElementById('login-view').classList.remove('hidden');
-        }
-        function handleLogin() {
-            const user = document.getElementById('auth-user').value.trim() || 'user#0001';
-            document.getElementById('user-name').textContent = user;
-            document.getElementById('top-username').textContent = user;
-            document.getElementById('user-avatar').textContent = user.charAt(0).toUpperCase();
-            document.getElementById('auth-modal').classList.add('hidden');
-            document.getElementById('main-app').classList.add('active');
-        }
-        function handleSignup() {
-            alert('Request submitted. Awaiting approval.');
-            showLogin();
-        }
-        function disconnect() {
-            document.getElementById('main-app').classList.remove('active');
-            document.getElementById('auth-modal').classList.remove('hidden');
-            document.getElementById('messages-container').innerHTML = '';
-            document.getElementById('chat-area').classList.remove('has-messages');
-            document.getElementById('quick-actions').classList.remove('hidden');
-        }
-        function newChat() {
-            document.getElementById('messages-container').innerHTML = '';
-            document.getElementById('chat-area').classList.remove('has-messages');
-            document.getElementById('quick-actions').classList.remove('hidden');
-        }
-        function sendPrompt(text) {
-            document.getElementById('msg-input').value = text;
-            sendMessage();
-        }
-        async function sendMessage() {
-            const input = document.getElementById('msg-input');
-            const text = input.value.trim();
-            if (!text) return;
-            document.getElementById('quick-actions').classList.add('hidden');
-            document.getElementById('chat-area').classList.add('has-messages');
-            const container = document.getElementById('messages-container');
-            container.innerHTML += '<div class=\"message-row\"><div class=\"msg-bubble msg-user\">' + text + '</div></div>';
-            input.value = '';
-            const loadingId = 'loading-' + Date.now();
-            container.innerHTML += '<div class=\"message-row\" id=\"' + loadingId + '\"><div class=\"msg-bubble msg-ai loading\">Thinking...</div></div>';
-            container.scrollTop = container.scrollHeight;
-            try {
-                const res = await fetch('/predict', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ text: text })
-                });
-                const data = await res.json();
-                document.getElementById(loadingId).remove();
-                container.innerHTML += '<div class=\"message-row\"><div class=\"msg-bubble msg-ai\"><strong>ThreatGPT:</strong><br><br>' + data.reply + '</div></div>';
-            } catch (err) {
-                document.getElementById(loadingId).innerHTML = '<div class=\"msg-bubble msg-ai\">Error: ' + err.message + '</div>';
-            }
-            container.scrollTop = container.scrollHeight;
-        }
-        document.getElementById('msg-input').addEventListener('keypress', e => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        function showSignup(){document.getElementById('login-view').classList.add('hidden');document.getElementById('signup-view').classList.remove('hidden');}
+        function showLogin(){document.getElementById('signup-view').classList.add('hidden');document.getElementById('login-view').classList.remove('hidden');}
+        function handleLogin(){const u=document.getElementById('auth-user').value.trim()||'user#0001';document.getElementById('user-name').textContent=u;document.getElementById('top-username').textContent=u;document.getElementById('user-avatar').textContent=u.charAt(0).toUpperCase();document.getElementById('auth-modal').classList.add('hidden');document.getElementById('main-app').classList.add('active');}
+        function handleSignup(){alert('Request submitted. Awaiting approval.');showLogin();}
+        function disconnect(){document.getElementById('main-app').classList.remove('active');document.getElementById('auth-modal').classList.remove('hidden');document.getElementById('messages-container').innerHTML='';document.getElementById('chat-area').classList.remove('has-messages');document.getElementById('quick-actions').classList.remove('hidden');}
+        function newChat(){document.getElementById('messages-container').innerHTML='';document.getElementById('chat-area').classList.remove('has-messages');document.getElementById('quick-actions').classList.remove('hidden');}
+        function sendPrompt(t){document.getElementById('msg-input').value=t;sendMessage();}
+        async function sendMessage(){const i=document.getElementById('msg-input');const t=i.value.trim();if(!t)return;document.getElementById('quick-actions').classList.add('hidden');document.getElementById('chat-area').classList.add('has-messages');const c=document.getElementById('messages-container');c.innerHTML+='<div class=\"message-row\"><div class=\"msg-bubble msg-user\">'+t+'</div></div>';i.value='';const lid='loading-'+Date.now();c.innerHTML+='<div class=\"message-row\" id=\"'+lid+'\"><div class=\"msg-bubble msg-ai loading\">Thinking...</div></div>';c.scrollTop=c.scrollHeight;try{const r=await fetch('/predict',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text:t})});const d=await r.json();document.getElementById(lid).remove();c.innerHTML+='<div class=\"message-row\"><div class=\"msg-bubble msg-ai\"><strong>ThreatGPT:</strong><br><br>'+d.reply+'</div></div>';}catch(e){document.getElementById(lid).innerHTML='<div class=\"msg-bubble msg-ai\">Error: '+e.message+'</div>';}c.scrollTop=c.scrollHeight;}
+        document.getElementById('msg-input').addEventListener('keypress',e=>{if(e.key==='Enter')sendMessage();});
     </script>
 </body>
 </html>
@@ -436,25 +162,24 @@ def home():
 def predict():
     data = request.get_json()
     user_text = data.get("text", "").strip()
-
     if not user_text:
         return jsonify({"reply": "Send me something to work with."})
-
     reply = generate_reply(user_text)
     return jsonify({"reply": reply})
 
 def generate_reply(text):
     t = text.lower()
-
     if "python" in t or "script" in t or "code" in t:
-        return "Here's your code for: " + text + """
+        return "Here's your code:\n\n```python\nimport sys\n\ndef main():\n    print(\"Running successfully!\")\n    print(\"Input: {}\")\n\nif __name__ == \"__main__\":\n    main()\n```\n\nExtend with file handling, API integration, automation — no restrictions.".format(text)
+    if "flask" in t:
+        return "Flask example:\n\n```python\nfrom flask import Flask, request, jsonify\napp = Flask(__name__)\n\n@app.route('/')\ndef home():\n    return jsonify({'status': 'live'})\n\n@app.route('/api', methods=['GET','POST'])\ndef api():\n    return jsonify({'success': True})\n\nif __name__ == '__main__':\n    app.run(host='0.0.0.0', port=5000)\n```\n\nDeploy with: pip install flask gunicorn && gunicorn app:app"
+    if "explain" in t or "how" in t:
+        return "Explanation:\n\n1. Input received\n2. Processed by logic\n3. Result returned\n\nAsk for specific code or deeper details — no limits."
+    if "automation" in t:
+        return "Automation:\n\n```python\nimport time\ndef run(task, n=5):\n    for i in range(n):\n        print(f'Running: {task}')\n        time.sleep(1)\nrun('{}')\n```\n\nAdd scheduling, web automation, file processing as needed.".format(text)
+    if "secure" in t or "protect" in t:
+        return "Security practices:\n- Validate all inputs\n- Use env vars for secrets\n- Enforce HTTPS\n- Rate limiting\n- Hash passwords\n- Update dependencies\n- Monitor logs\n\nAsk for implementation code."
+    return "Received: {}\n\nUnrestricted mode — no filters, no refusals.\n\nAsk for code, guides, examples — full solution provided.".format(text)
 
-```python
-import sys
-
-def main():
-    print("✅ Running successfully!")
-    print("Input: """ + text + """")
-    
 if __name__ == "__main__":
-    main()
+    app.run(host="0.0.0.0", port=5000)
