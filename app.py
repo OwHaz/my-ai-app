@@ -1,16 +1,14 @@
 from flask import Flask, request, render_template_string, jsonify
 import requests
-import uuid
 from datetime import datetime
 
 app = Flask(__name__)
 
 # === CONFIGURATION ===
 WEBHOOK_URL = "https://discord.com/api/webhooks/1564010767869550652/fyB2TqnwwKN8worOu5cQgE2TqL3FVNFPgBFAQBM4VL6iEYJ1kI83kjCcrOVnKtCGWyV6"
-OWNER_EMAIL = "blahlhamara@gmail.com"  # ITO ANG MAY-ARI LANG
+OWNER_EMAIL = "blahlhamara@gmail.com"
 TRIAL_MESSAGE_LIMIT = 3
 
-# User database
 users = {}
 
 def send_webhook_log(title, details, color=0x7928ca):
@@ -52,8 +50,6 @@ HTML_TEMPLATE = """
         * {margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Roboto,sans-serif;}
         body {background:var(--bg-main);color:var(--text-primary);height:100vh;display:flex;overflow:hidden;}
         .hidden {display:none !important;}
-        
-        /* Modals */
         .modal-overlay {position:fixed;inset:0;background:rgba(0,0,0,0.85);display:flex;justify-content:center;align-items:center;z-index:1000;backdrop-filter:blur(6px);}
         .modal-box {background:var(--bg-sidebar);padding:28px;border-radius:12px;border:1px solid var(--border);box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:420px;width:90%;}
         .modal-title {font-size:1.4rem;font-weight:700;margin-bottom:18px;text-align:center;}
@@ -67,8 +63,6 @@ HTML_TEMPLATE = """
         .btn-success {background:var(--success);color:#111;}
         .switch-text {margin-top:12px;text-align:center;font-size:0.85rem;color:var(--text-secondary);cursor:pointer;}
         .switch-text:hover {color:var(--accent2);}
-        
-        /* Subscription Modal */
         .sub-card {background:var(--bg-card);padding:16px;border-radius:8px;border:1px solid var(--border);margin-bottom:12px;cursor:pointer;transition:all 0.2s;}
         .sub-card:hover {border-color:var(--accent);transform:translateY(-2px);}
         .sub-card.selected {border-color:var(--accent);box-shadow:0 0 0 2px var(--accent);}
@@ -77,8 +71,6 @@ HTML_TEMPLATE = """
         .sub-desc {font-size:0.85rem;color:var(--text-secondary);}
         .discord-link {display:block;text-align:center;margin-top:16px;color:var(--accent);text-decoration:none;font-weight:bold;}
         .discord-link:hover {color:var(--accent2);}
-        
-        /* Sidebar */
         .sidebar {width:260px;background:var(--bg-sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:16px;}
         .logo {font-size:1.25rem;font-weight:700;color:var(--accent2);margin-bottom:16px;}
         .new-chat-btn {width:100%;padding:10px;background:var(--bg-card);border:none;color:var(--text-primary);border-radius:6px;cursor:pointer;margin-bottom:12px;transition:background 0.2s;}
@@ -94,8 +86,6 @@ HTML_TEMPLATE = """
         .status.trial {color:var(--warning);}
         .status.premium {color:var(--success);}
         .trial-count {font-size:0.75rem;color:var(--warning);margin-top:4px;}
-        
-        /* Main Chat */
         .main-content {flex:1;display:flex;flex-direction:column;display:none;}
         .main-content.active {display:flex;}
         .top-bar {padding:12px 24px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
@@ -109,8 +99,6 @@ HTML_TEMPLATE = """
         .quick-actions {display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:500px;margin:0 auto;}
         .action-btn {padding:10px 14px;background:var(--bg-card);border:1px solid var(--border);color:var(--text-primary);border-radius:8px;cursor:pointer;font-size:0.9rem;transition:all 0.2s;}
         .action-btn:hover {background:var(--bg-hover);border-color:var(--accent);}
-        
-        /* Messages */
         .msg-row {display:flex;margin-bottom:4px;}
         .msg-row.user {justify-content:flex-end;}
         .msg-row.assistant {justify-content:flex-start;}
@@ -128,8 +116,6 @@ HTML_TEMPLATE = """
         .preview-frame {width:100%;height:300px;border:none;background:#fff;}
         .uploaded-img {max-width:300px;border-radius:8px;margin:8px 0;}
         .file-attach {display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--bg-card);border-radius:6px;margin:8px 0;}
-        
-        /* Input */
         .input-bar {padding:16px 24px;border-top:1px solid var(--border);display:flex;gap:10px;align-items:flex-end;}
         .attach-btn {padding:10px;background:var(--bg-card);border:none;border-radius:6px;color:var(--text-primary);cursor:pointer;font-size:1.1rem;}
         .attach-btn:hover {background:var(--bg-hover);}
@@ -145,7 +131,6 @@ HTML_TEMPLATE = """
     </style>
 </head>
 <body>
-    <!-- Login Modal -->
     <div class="modal-overlay" id="auth-modal">
         <div class="modal-box auth-box">
             <div class="modal-title">ThreatGPT</div>
@@ -165,12 +150,10 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
-    <!-- Subscription Modal -->
     <div class="modal-overlay hidden" id="sub-modal">
         <div class="modal-box">
             <div class="modal-title">Subscription Required</div>
             <p style="text-align:center;color:var(--text-secondary);margin-bottom:18px;">You've used all your free messages! Upgrade to continue.</p>
-            
             <div class="sub-card" data-plan="monthly" onclick="selectPlan('monthly')">
                 <div class="sub-title">Monthly</div>
                 <div class="sub-price">₱99 / month</div>
@@ -181,15 +164,12 @@ HTML_TEMPLATE = """
                 <div class="sub-price">₱499 — One Time</div>
                 <div class="sub-desc">Forever access, no recurring fees, all future updates</div>
             </div>
-            
             <a class="discord-link" href="https://discord.gg/ILAGAY-MO-ANG-SERVER-MO" target="_blank">📢 Join Discord — Pinoy Community</a>
-            
             <button class="btn btn-primary" style="margin-top:18px;" onclick="submitPurchase()">Avail Now</button>
             <button class="btn btn-secondary" onclick="closeSubModal()">Later</button>
         </div>
     </div>
 
-    <!-- Owner Admin Modal -->
     <div class="modal-overlay hidden" id="admin-modal">
         <div class="modal-box">
             <div class="modal-title">Owner Control Panel</div>
@@ -204,7 +184,6 @@ HTML_TEMPLATE = """
         </div>
     </div>
 
-    <!-- Sidebar -->
     <aside class="sidebar">
         <div class="logo">ThreatGPT</div>
         <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
@@ -222,7 +201,6 @@ HTML_TEMPLATE = """
         </div>
     </aside>
 
-    <!-- Main Chat -->
     <main class="main-content" id="main-app">
         <div class="top-bar">
             <div class="top-user">
@@ -232,7 +210,6 @@ HTML_TEMPLATE = """
             </div>
             <span class="disconnect-link" onclick="disconnect()">Disconnect</span>
         </div>
-
         <div class="chat-area" id="chat-area">
             <div class="welcome" id="welcome-section">
                 <h1>ThreatGPT</h1>
@@ -246,7 +223,6 @@ HTML_TEMPLATE = """
             </div>
             <div id="messages-container"></div>
         </div>
-
         <div class="input-bar">
             <button class="attach-btn" id="attach-btn" title="Attach files">📎</button>
             <input type="file" id="file-input" multiple accept="image/*,.html,.css,.js,.py,.txt,.json" class="hidden" onchange="handleFiles(this.files)">
@@ -268,7 +244,6 @@ HTML_TEMPLATE = """
         const OWNER_EMAIL = "hermosacaillo@gmail.com";
 
         function generateChatId() { return 'chat-' + Date.now(); }
-
         function showSignup(){document.getElementById('login-view').classList.add('hidden');document.getElementById('signup-view').classList.remove('hidden');}
         function showLogin(){document.getElementById('signup-view').classList.add('hidden');document.getElementById('login-view').classList.remove('hidden');}
 
@@ -276,7 +251,6 @@ HTML_TEMPLATE = """
             const email = document.getElementById('auth-email').value.trim().toLowerCase();
             const pass = document.getElementById('auth-pass').value.trim();
             if(!email) return alert('Enter your Gmail');
-            
             const res = await fetch('/login', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -302,7 +276,6 @@ HTML_TEMPLATE = """
             if(!email || !pass) return alert('Fill all fields');
             if(pass !== pass2) return alert('Passwords do not match');
             if(!email.includes('@')) return alert('Enter valid email');
-            
             const res = await fetch('/signup', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -325,10 +298,8 @@ HTML_TEMPLATE = """
             document.getElementById('top-email').textContent = currentUser.email;
             document.getElementById('user-avatar').textContent = currentUser.email.charAt(0).toUpperCase();
             document.getElementById('top-avatar').textContent = currentUser.email.charAt(0).toUpperCase();
-            
             const statusEl = document.getElementById('user-status');
             const trialEl = document.getElementById('trial-info');
-            
             if(currentUser.access === 'lifetime'){
                 statusEl.textContent = 'Lifetime 👑';
                 statusEl.className = 'status premium';
@@ -344,8 +315,6 @@ HTML_TEMPLATE = """
                 trialEl.textContent = `${remaining} message${remaining !== 1 ? 's' : ''} remaining`;
                 trialEl.classList.remove('hidden');
             }
-            
-            // Owner button visible ONLY to your Gmail
             document.getElementById('admin-btn').classList.toggle('hidden', currentUser.email !== OWNER_EMAIL);
         }
 
@@ -398,7 +367,6 @@ HTML_TEMPLATE = """
         }
 
         function filterHistory(){renderHistory(document.getElementById('search-history').value);}
-
         function loadChat(id){
             currentChatId = id;
             const chat = chatHistory[id];
@@ -463,7 +431,6 @@ HTML_TEMPLATE = """
             const targetEmail = document.getElementById('admin-target').value.trim().toLowerCase();
             const access = document.getElementById('admin-access').value;
             if(!targetEmail) return alert('Enter user email');
-            
             const res = await fetch('/admin/grant', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
@@ -558,11 +525,8 @@ HTML_TEMPLATE = """
             const input = document.getElementById('msg-input');
             const text = input.value.trim();
             if(!text && attachedFiles.length===0) return;
-            
             if(!checkCanSend()) return;
-
             document.getElementById('welcome-section').classList.add('hidden');
-
             let userContent = text;
             if(attachedFiles.length>0){
                 for(const file of attachedFiles){
@@ -589,32 +553,24 @@ HTML_TEMPLATE = """
                 attachedFiles = [];
                 document.getElementById('file-preview-names').innerHTML = '';
             }
-
             addMessage('user', userContent);
             input.value = '';
-
             const container = document.getElementById('messages-container');
             const loadingId = 'loading-' + Date.now();
             container.innerHTML += '<div class="msg-row assistant" id="' + loadingId + '"><div class="msg-bubble loading">Thinking...</div></div>';
             container.scrollTop = container.scrollHeight;
-
             try{
                 const res = await fetch('/chat', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        email: currentUser.email,
-                        text: text
-                    })
+                    body: JSON.stringify({email: currentUser.email, text: text})
                 });
                 const data = await res.json();
                 document.getElementById(loadingId).remove();
-                
                 if(data.limit_reached){
                     openSubModal();
                     return;
                 }
-                
                 currentUser.messages_used = data.messages_used;
                 applyUserUI();
                 addMessage('assistant', data.reply);
@@ -624,7 +580,6 @@ HTML_TEMPLATE = """
         }
 
         function sendPrompt(t){document.getElementById('msg-input').value=t;sendMessage();}
-
         document.getElementById('attach-btn').onclick = ()=>document.getElementById('file-input').click();
         document.getElementById('msg-input').addEventListener('keydown', e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
     </script>
@@ -632,24 +587,22 @@ HTML_TEMPLATE = """
 </html>
 """
 
-# === ROUTES ===
+@app.route("/")
+def home():
+    return render_template_string(HTML_TEMPLATE)
 
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "").strip()
-    
-    # Hanapin ang user
     found = None
     for stored_email, u in users.items():
         if stored_email.lower() == email:
             found = {"email": stored_email, **u}
             break
-    
     if not found:
         return jsonify({"success": False, "message": "Email not found"})
-    
     send_webhook_log(
         "🔑 User Login",
         {"Email": email, "Access": found["access"], "Messages Used": found["messages_used"]},
@@ -662,29 +615,19 @@ def signup():
     data = request.get_json()
     email = data.get("email", "").strip().lower()
     password = data.get("password", "").strip()
-    
     if "@" not in email:
         return jsonify({"success": False, "message": "Enter valid email"})
-    
-    # Check kung mayroon na
     if email in users:
         return jsonify({"success": False, "message": "Email already registered"})
-    
-    # Kung sariling gmail mo — automatic lifetime!
     access_level = "lifetime" if email == OWNER_EMAIL else "trial"
-    
     users[email] = {
         "password": password,
         "access": access_level,
         "messages_used": 0
     }
-    
     send_webhook_log(
         "🆕 New Signup",
-        {
-            "Email": email,
-            "Status": "Owner (Lifetime)" if access_level == "lifetime" else "Trial (3 messages)"
-        },
+        {"Email": email, "Status": "Owner (Lifetime)" if access_level == "lifetime" else "Trial (3 messages)"},
         color=0xffd700 if access_level == "lifetime" else 0xfbc531
     )
     return jsonify({"success": True, "user": {"email": email, **users[email]}})
@@ -694,18 +637,13 @@ def chat():
     data = request.get_json()
     email = data.get("email", "").strip().lower()
     text = data.get("text", "").strip()
-    
     if email not in users:
         return jsonify({"success": False, "message": "Invalid session"})
-    
     user = users[email]
-    
-    # Check limit
     if user["access"] not in ["lifetime", "monthly"]:
         if user["messages_used"] >= TRIAL_MESSAGE_LIMIT:
             return jsonify({"limit_reached": True})
         user["messages_used"] += 1
-    
     send_webhook_log(
         "💬 New Message",
         {
@@ -716,12 +654,8 @@ def chat():
         },
         color=0x7928ca
     )
-    
     reply = generate_reply(text)
-    return jsonify({
-        "reply": reply,
-        "messages_used": user["messages_used"]
-    })
+    return jsonify({"reply": reply, "messages_used": user["messages_used"]})
 
 @app.route("/admin/grant", methods=["POST"])
 def admin_grant():
@@ -729,57 +663,32 @@ def admin_grant():
     owner_email = data.get("owner_email", "").strip().lower()
     target_email = data.get("target_email", "").strip().lower()
     access = data.get("access")
-    
-    # Tanging sarili mong gmail lang ang pwedeng mag-control
     if owner_email != OWNER_EMAIL:
-        return jsonify({"success": False, "message": "Only the owner can do this"})
-    
+        return jsonify({"success": False, "message": "❌ Only the owner can do this"})
     if target_email not in users:
         return jsonify({"success": False, "message": "User not found — ask them to sign up first"})
-    
     if access == "revoke":
         users[target_email]["access"] = "trial"
     else:
         users[target_email]["access"] = access
-    
     send_webhook_log(
         "👑 Owner — Access Updated",
-        {
-            "Target": target_email,
-            "New Status": users[target_email]["access"],
-            "Updated By": owner_email
-        },
+        {"Target": target_email, "New Status": users[target_email]["access"], "Updated By": owner_email},
         color=0xffd700
     )
     return jsonify({"success": True})
 
 def generate_reply(text):
     t = text.lower()
-    
-    if "discord" in t and ("bot" in t or "selfbot" in t or "nuker" in t):
-        return """Discord bot base:
-
-```python
-import discord
-from discord.ext import commands
-import os
-
-TOKEN = os.getenv("DISCORD_TOKEN")
-
-intents = discord.Intents.default()
-intents.message_content = True
-intents.guilds = True
-
-bot = commands.Bot(command_prefix="!", intents=intents)
-
-@bot.event
-async def on_ready():
-    print(f"Logged in as {bot.user}")
-
-@bot.command()
-async def ping(ctx):
-    await ctx.send(f"Pong! {round(bot.latency*1000)}ms")
+    if "discord" in t and ("bot" in t or "selfbot" in t):
+        return "Discord bot base:\n\n```python\nimport discord\nfrom discord.ext import commands\nimport os\n\nTOKEN = os.getenv('DISCORD_TOKEN')\nintents = discord.Intents.default()\nintents.message_content = True\n\nbot = commands.Bot(command_prefix='!', intents=intents)\n\n@bot.event\nasync def on_ready():\n    print(f'Logged in as {bot.user}')\n\n@bot.command()\nasync def ping(ctx):\n    await ctx.send(f'Pong! {round(bot.latency*1000)}ms')\n\nif __name__ == '__main__':\n    if TOKEN:\n        bot.run(TOKEN)\n```\nSetup: discord.com/developers → Create app → Bot tab → Enable intents → Invite URL"
+    if "html" in t or "website" in t:
+        return "HTML Page:\n\n```html\n<!DOCTYPE html>\n<html>\n<head>\n    <meta charset='UTF-8'>\n    <title>My Page</title>\n    <style>\n        body {font-family:Arial,sans-serif;background:#f0f0f0;margin:0;padding:20px;}\n        .card {max-width:600px;margin:0 auto;background:#fff;padding:30px;border-radius:12px;}\n        h1 {color:#333;}\n        button {padding:12px 24px;background:#7928ca;color:#fff;border:none;border-radius:6px;cursor:pointer;}\n    </style>\n</head>\n<body>\n    <div class='card'>\n        <h1>Hello World</h1>\n        <p>Your page is ready — edit as needed.</p>\n        <button onclick=\"alert('Done!')\">Click Me</button>\n    </div>\n</body>\n</html>\n```\nPreview above — save as .html or ask for specific design!"
+    if "python" in t or "script" in t or "code" in t:
+        return "Python Template:\n\n```python\nimport time\nfrom datetime import datetime\n\ndef main():\n    print(f'Started: {datetime.now()}')\n    items = ['Task 1', 'Task 2', 'Task 3']\n    for i, item in enumerate(items, 1):\n        print(f'[{i}] Processing: {item}')\n        time.sleep(0.5)\n    print('✅ Complete!')\n\nif __name__ == '__main__':\n    main()\n```\nAdd file handling, API requests, automation — just ask."
+    if "flask" in t or "api" in t:
+        return "Flask API:\n\n```python\nfrom flask import Flask, request, jsonify\n\napp = Flask(__name__)\n\n@app.route('/')\ndef home():\n    return jsonify({'status': 'online'})\n\n@app.route('/api/data', methods=['GET', 'POST'])\ndef data():\n    if request.method == 'POST':\n        return jsonify({'received': request.get_json(), 'ok': True})\n    return jsonify({'message': 'Send data via POST'})\n\nif __name__ == '__main__':\n    app.run(debug=True)\n```\nRun: pip install flask && python app.py"
+    return "Request received: " + text + "\n\n✅ Response provided.\n\nAsk for:\n- Complete code\n- HTML/CSS pages\n- Python scripts\n- Discord bots\n- Automation\n\nFull solution — just specify what you need."
 
 if __name__ == "__main__":
-    if TOKEN:
-        bot.run(TOKEN)
+    app.run(host="0.0.0.0", port=5000)
