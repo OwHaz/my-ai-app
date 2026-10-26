@@ -217,4 +217,5 @@ HTML_TEMPLATE = """
     <aside class="sidebar">
         <div class="logo">ThreatGPT</div>
         <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
-        <input type="text" class="search-input" id="search-history" placeholder="
+        <input type="text" class="search-input" id="search-history" placeholder="Search..." oninput="filterHistory()">
+        <div class="history-list"
