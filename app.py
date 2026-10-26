@@ -7,7 +7,7 @@ from datetime import datetime
 app = Flask(__name__)
 
 # ==============================================
-# SA RENDER MO ILALAGAY ANG MGA KEY
+# SA RENDER MO ILALAGAY ANG MGA KEY SA ENVIRONMENT
 # ==============================================
 OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "").strip()
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "").strip()
@@ -221,4 +221,4 @@ HTML_TEMPLATE = """
             <div style="flex:1;">
                 <div class="name" id="user-email">User</div>
                 <div class="status trial" id="user-status">Trial</div>
-                <div class="trial-count" id="trial-info">3 messages remaining</div
+                <div class="trial-count" id="trial-info">3 messages remaining</div>
