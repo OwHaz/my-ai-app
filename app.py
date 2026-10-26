@@ -7,16 +7,19 @@ from datetime import datetime
 app = Flask(__name__)
 
 # ==============================================
-# ILAGAY MO LANG DITO ANG KAILANGAN
+# SA RENDER MO ILALAGAY ANG MGA KEY — HINDI DITO
 # ==============================================
-OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "")   # Halimbawa: sk-or-v1-xxxxxxxxxxxx
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "")  # Discord webhook link
-SELECTED_MODEL = "mistralai/mistral-7b-instruct"        # Pwede palitan: google/gemma-7b-it
+OPENROUTER_API_KEY = os.environ.get("OPENROUTER_API_KEY", "").strip()
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "").strip()
+SELECTED_MODEL = "meta-llama/llama-3-8b-instruct"
 OWNER_EMAIL = "blahlhamara@gmail.com"
 TRIAL_MESSAGE_LIMIT = 3
 
-# HINDI NA KAILANGANG BAGUHIN — TAMA NA ITO
+# ✅ TAMA ANG URL — WALANG DAGDAG NA / SA DULO
 _OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# ✅ ILAGAY MO DITO ANG DETALYE NG APP MO
+APP_NAME = "ThreatGPT"
 # ==============================================
 
 users = {}
@@ -181,7 +184,6 @@ HTML_TEMPLATE = """
             </div>
         </div>
     </div>
-
     <div class="modal-overlay hidden" id="sub-modal">
         <div class="modal-box">
             <div class="modal-title">Subscription Required</div>
@@ -201,7 +203,6 @@ HTML_TEMPLATE = """
             <button class="btn btn-secondary" onclick="closeSubModal()">Later</button>
         </div>
     </div>
-
     <div class="modal-overlay hidden" id="admin-modal">
         <div class="modal-box">
             <div class="modal-title">Owner Control Panel</div>
@@ -215,377 +216,8 @@ HTML_TEMPLATE = """
             <button class="btn btn-secondary" onclick="closeAdminModal()">Close</button>
         </div>
     </div>
-
     <aside class="sidebar">
         <div class="logo">ThreatGPT</div>
         <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
         <input type="text" class="search-input" id="search-history" placeholder="Search..." oninput="filterHistory()">
-        <div class="history-list" id="history-list"></div>
-        <div class="sidebar-footer">
-            <div class="user-avatar" id="user-avatar">U</div>
-            <div style="flex:1;">
-                <div class="user-info">
-                    <div class="name" id="user-email">User</div>
-                    <div class="status trial" id="user-status">Trial</div>
-                </div>
-                <div class="trial-count" id="trial-info">3 messages remaining</div>
-            </div>
-        </div>
-    </aside>
-
-    <main class="main-content" id="main-app">
-        <div class="top-bar">
-            <div class="top-user">
-                <div class="user-avatar" id="top-avatar">U</div>
-                <span id="top-email">User</span>
-                <button id="admin-btn" class="hidden" style="margin-left:8px;padding:4px 8px;background:var(--accent);border:none;border-radius:4px;color:#fff;cursor:pointer;" onclick="openAdminModal()">⚙️</button>
-            </div>
-            <span class="disconnect-link" onclick="disconnect()">Disconnect</span>
-        </div>
-        <div class="chat-area" id="chat-area">
-            <div class="welcome" id="welcome-section">
-                <h1>ThreatGPT</h1>
-                <p>Ask me anything — powered by OpenRouter</p>
-                <div class="quick-actions">
-                    <button class="action-btn" onclick="sendPrompt('Python script')">Python script</button>
-                    <button class="action-btn" onclick="sendPrompt('HTML template')">HTML template</button>
-                    <button class="action-btn" onclick="sendPrompt('Discord bot')">Discord bot</button>
-                    <button class="action-btn" onclick="sendPrompt('Automation code')">Automation</button>
-                </div>
-            </div>
-            <div id="messages-container"></div>
-        </div>
-        <div class="input-bar">
-            <button class="attach-btn" id="attach-btn" title="Attach files">📎</button>
-            <input type="file" id="file-input" multiple accept="image/*,.html,.css,.js,.py,.txt,.json" class="hidden">
-            <div class="input-wrapper">
-                <div class="preview-names" id="file-preview-names"></div>
-                <textarea class="message-input" id="msg-input" placeholder="Type your message..." autocomplete="off"></textarea>
-            </div>
-            <button class="send-btn" id="send-btn" onclick="sendMessage()">➤</button>
-        </div>
-    </main>
-
-    <script>
-        let currentUser = null, currentChatId = null, chatHistory = {}, attachedFiles = [], selectedPlan = null;
-        const TRIAL_LIMIT = 3, OWNER_EMAIL = "hermosacaillo@gmail.com";
-        let loginCaptchaAnswer = null, signupCaptchaAnswer = null;
-
-        function genCaptcha(){
-            const n1 = Math.floor(Math.random()*15)+1, n2 = Math.floor(Math.random()*15)+1;
-            const op = Math.random()>0.5 ? '+' : '-';
-            let q, a;
-            if(op==='+'){a=n1+n2;q=`${n1} + ${n2}`;}
-            else{
-                if(n1>=n2){a=n1-n2;q=`${n1} - ${n2}`;}
-                else{a=n2-n1;q=`${n2} - ${n1}`;}
-            }
-            return {q,a};
-        }
-        function refreshLoginCaptcha(){
-            const c=genCaptcha();
-            document.getElementById('login-captcha-q').textContent=c.q+" = ?";
-            loginCaptchaAnswer=c.a;
-            document.getElementById('auth-captcha').value='';
-        }
-        function refreshSignupCaptcha(){
-            const c=genCaptcha();
-            document.getElementById('signup-captcha-q').textContent=c.q+" = ?";
-            signupCaptchaAnswer=c.a;
-            document.getElementById('su-captcha').value='';
-        }
-        refreshLoginCaptcha(); refreshSignupCaptcha();
-
-        function generateChatId(){return 'chat-'+Date.now();}
-        function showSignup(){document.getElementById('login-view').classList.add('hidden');document.getElementById('signup-view').classList.remove('hidden');refreshSignupCaptcha();}
-        function showLogin(){document.getElementById('signup-view').classList.add('hidden');document.getElementById('login-view').classList.remove('hidden');refreshLoginCaptcha();}
-
-        async function handleLogin(){
-            const email=document.getElementById('auth-email').value.trim().toLowerCase();
-            const pass=document.getElementById('auth-pass').value.trim();
-            const cap=parseInt(document.getElementById('auth-captcha').value.trim()||'');
-            if(!email)return alert('Enter your Gmail');
-            if(cap!==loginCaptchaAnswer){alert('❌ Wrong answer! Try again.');refreshLoginCaptcha();return;}
-            const res=await fetch('/login',{
-                method:'POST',headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({email,password:pass,captcha:cap})
-            });
-            const data=await res.json();
-            if(data.success){
-                currentUser=data.user;applyUserUI();
-                document.getElementById('auth-modal').classList.add('hidden');
-                document.getElementById('main-app').classList.add('active');
-                loadHistory();if(!currentChatId)newChat();
-            }else{alert(data.message||'Login failed');refreshLoginCaptcha();}
-        }
-        async function handleSignup(){
-            const email=document.getElementById('su-email').value.trim().toLowerCase();
-            const pass=document.getElementById('su-pass').value.trim();
-            const pass2=document.getElementById('su-pass2').value.trim();
-            const cap=parseInt(document.getElementById('su-captcha').value.trim()||'');
-            if(!email||!pass)return alert('Fill all fields');
-            if(pass!==pass2)return alert('Passwords do not match');
-            if(!email.includes('@'))return alert('Enter valid email');
-            if(cap!==signupCaptchaAnswer){alert('❌ Wrong answer! Try again.');refreshSignupCaptcha();return;}
-            const res=await fetch('/signup',{
-                method:'POST',headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({email,password:pass,captcha:cap})
-            });
-            const data=await res.json();
-            if(data.success){
-                currentUser=data.user;applyUserUI();
-                document.getElementById('auth-modal').classList.add('hidden');
-                document.getElementById('main-app').classList.add('active');newChat();
-            }else{alert(data.message||'Signup failed');refreshSignupCaptcha();}
-        }
-        function applyUserUI(){
-            document.getElementById('user-email').textContent=currentUser.email;
-            document.getElementById('top-email').textContent=currentUser.email;
-            document.getElementById('user-avatar').textContent=currentUser.email[0].toUpperCase();
-            document.getElementById('top-avatar').textContent=currentUser.email[0].toUpperCase();
-            const st=document.getElementById('user-status'), tr=document.getElementById('trial-info');
-            if(currentUser.access==='lifetime'){st.textContent='Lifetime 👑';st.className='status premium';tr.classList.add('hidden');}
-            else if(currentUser.access==='monthly'){st.textContent='Premium';st.className='status premium';tr.classList.add('hidden');}
-            else{
-                st.textContent='Trial';st.className='status trial';
-                const rem=TRIAL_LIMIT-currentUser.messages_used;
-                tr.textContent=`${rem} message${rem!==1?'s':''} remaining`;tr.classList.remove('hidden');
-            }
-            document.getElementById('admin-btn').classList.toggle('hidden',currentUser.email!==OWNER_EMAIL);
-        }
-        function disconnect(){
-            currentUser=null;document.getElementById('main-app').classList.remove('active');
-            document.getElementById('auth-modal').style.display='flex';
-            chatHistory={};currentChatId=null;
-            refreshLoginCaptcha();refreshSignupCaptcha();
-        }
-        function newChat(){
-            saveCurrentChat();currentChatId=generateChatId();
-            chatHistory[currentChatId]={title:'New Chat',messages:[]};
-            renderHistory();loadChat(currentChatId);
-        }
-        function saveCurrentChat(){
-            if(!currentChatId)return;
-            const msgs=document.querySelectorAll('#messages-container .msg-row');
-            if(msgs.length>0){
-                const first=msgs[0].textContent.trim().substring(0,25);
-                chatHistory[currentChatId].title=first||'New Chat';
-                chatHistory[currentChatId].messages=getCurrentMessages();
-            }
-            localStorage.setItem('threatgpt_history',JSON.stringify(chatHistory));
-        }
-        function loadHistory(){
-            const s=localStorage.getItem('threatgpt_history');if(s)chatHistory=JSON.parse(s);
-            renderHistory();const ids=Object.keys(chatHistory);if(ids.length>0)loadChat(ids[0]);
-        }
-        function renderHistory(filter=''){
-            const list=document.getElementById('history-list');list.innerHTML='';
-            Object.entries(chatHistory).reverse().forEach(([id,chat])=>{
-                if(filter&&!chat.title.toLowerCase().includes(filter.toLowerCase()))return;
-                const item=document.createElement('div');
-                item.className='history-item'+(id===currentChatId?' active':'');
-                item.textContent=chat.title;item.onclick=()=>{saveCurrentChat();loadChat(id);};
-                list.appendChild(item);
-            });
-        }
-        function filterHistory(){renderHistory(document.getElementById('search-history').value);}
-        function loadChat(id){
-            currentChatId=id;const c=chatHistory[id];if(!c)return;
-            document.getElementById('messages-container').innerHTML='';
-            document.getElementById('welcome-section').classList.toggle('hidden',c.messages.length>0);
-            c.messages.forEach(m=>addMessage(m.role,m.content,false));
-            renderHistory();
-        }
-        function getCurrentMessages(){
-            const msgs=document.querySelectorAll('#messages-container .msg-row');
-            return Array.from(msgs).map(r=>({
-                role:r.classList.contains('user')?'user':'assistant',
-                content:r.querySelector('.msg-bubble').innerHTML
-            }));
-        }
-        function checkCanSend(){
-            if(!currentUser)return false;
-            if(currentUser.access==='lifetime'||currentUser.access==='monthly')return true;
-            if(currentUser.messages_used<TRIAL_LIMIT)return true;
-            openSubModal();return false;
-        }
-        function openSubModal(){selectedPlan=null;document.querySelectorAll('.sub-card').forEach(c=>c.classList.remove('selected'));document.getElementById('sub-modal').classList.remove('hidden');}
-        function closeSubModal(){document.getElementById('sub-modal').classList.add('hidden');}
-        function selectPlan(p){selectedPlan=p;document.querySelectorAll('.sub-card').forEach(c=>c.classList.toggle('selected',c.dataset.plan===p));}
-        async function submitPurchase(){if(!selectedPlan)return alert('Select a plan first');alert(`Send payment & email: ${currentUser.email}`);closeSubModal();}
-        function openAdminModal(){document.getElementById('admin-modal').classList.remove('hidden');}
-        function closeAdminModal(){document.getElementById('admin-modal').classList.add('hidden');}
-        async function applyAccess(){
-            const target=document.getElementById('admin-target').value.trim().toLowerCase();
-            const level=document.getElementById('admin-access').value;
-            if(!target)return alert('Enter email');
-            const res=await fetch('/admin/grant',{
-                method:'POST',headers:{'Content-Type':'application/json'},
-                body:JSON.stringify({owner_email:currentUser.email,target_email:target,access:level})
-            });
-            const d=await res.json();
-            if(d.success){alert('✅ Updated!');closeAdminModal();}else alert(d.message||'❌ Failed');
-        }
-        function attachCopyButtons(){
-            document.querySelectorAll('.code-wrap').forEach(b=>{
-                if(b.dataset.copyAdded)return;b.dataset.copyAdded='true';
-                const pre=b.querySelector('pre'),code=pre.textContent;
-                const h=document.createElement('div');h.className='code-header';
-                h.innerHTML='<span>Code</span><button class="copy-btn" onclick="copyCode(this,`'+btoa(code).replace(/'/g,"\\'")+'`)">Copy</button>';
-                b.insertBefore(h,pre);
-            });
-        }
-        window.copyCode=function(btn,b64){
-            const t=atob(b64);navigator.clipboard.writeText(t).then(()=>{
-                btn.textContent='Copied!';btn.classList.add('copied');
-                setTimeout(()=>{btn.textContent='Copy';btn.classList.remove('copied');},2000);
-            });
-        };
-        function renderContent(text){
-            return text.replace(/```([\s\S]*?)```/g,'<div class="code-wrap"><pre><code>$1</code></pre></div>');
-        }
-        function addMessage(role,content,save=true){
-            const c=document.getElementById('messages-container');
-            const row=document.createElement('div');row.className='msg-row '+role;
-            row.innerHTML='<div class="msg-bubble">'+(role==='assistant'?'<strong>ThreatGPT:</strong><br><br>':'')+renderContent(content)+'</div>';
-            c.appendChild(row);attachCopyButtons();
-            c.scrollTop=c.scrollHeight;
-            if(save)setTimeout(saveCurrentChat,100);
-        }
-        document.getElementById('attach-btn').onclick=()=>document.getElementById('file-input').click();
-        document.getElementById('file-input').addEventListener('change',e=>{
-            attachedFiles=Array.from(e.target.files);
-            const p=document.getElementById('file-preview-names');p.innerHTML='';
-            attachedFiles.forEach((f,i)=>{
-                const t=document.createElement('span');t.className='file-tag';t.textContent=f.name;
-                const x=document.createElement('button');x.textContent='×';x.onclick=()=>{
-                    attachedFiles.splice(i,1);const dt=new DataTransfer();attachedFiles.forEach(f=>dt.items.add(f));
-                    document.getElementById('file-input').files=dt.files;t.remove();
-                };
-                t.appendChild(x);p.appendChild(t);
-            });
-        });
-        async function sendMessage(){
-            const input=document.getElementById('msg-input');
-            const text=input.value.trim();
-            if(!text&&attachedFiles.length===0)return;
-            if(!checkCanSend())return;
-            document.getElementById('welcome-section').classList.add('hidden');
-            const fd=new FormData();fd.append('text',text);
-            attachedFiles.forEach(f=>fd.append('files',f));
-            let displayText=text;
-            if(attachedFiles.length>0){
-                attachedFiles.forEach(f=>displayText+=`\n[File: ${f.name}]`);
-            }
-            addMessage('user',displayText);
-            input.value='';attachedFiles=[];
-            document.getElementById('file-preview-names').innerHTML='';
-            document.getElementById('file-input').value='';
-            const c=document.getElementById('chat-area');
-            const loadingId='loading-'+Date.now();
-            c.insertAdjacentHTML('beforeend',`<div class="msg-row assistant" id="${loadingId}"><div class="msg-bubble loading">Thinking...</div></div>`);
-            c.scrollTop=c.scrollHeight;
-            fd.append('email',currentUser.email);
-            try{
-                const res=await fetch('/chat',{method:'POST',body:fd});
-                const d=await res.json();
-                document.getElementById(loadingId).remove();
-                if(d.limit_reached){openSubModal();return;}
-                currentUser.messages_used=d.messages_used;applyUserUI();
-                addMessage('assistant',d.reply);
-            }catch(err){
-                document.getElementById(loadingId).remove();
-                addMessage('assistant','Error: '+err.message);
-            }
-        }
-        function sendPrompt(t){document.getElementById('msg-input').value=t;sendMessage();}
-        document.getElementById('msg-input').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}});
-    </script>
-</body>
-</html>
-"""
-
-@app.route("/")
-def home():
-    return render_template_string(HTML_TEMPLATE)
-
-@app.route("/login", methods=["POST"])
-def login():
-    data = request.get_json()
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "").strip()
-    if email not in users:
-        return jsonify({"success": False, "message": "Email not found"})
-    if users[email]["password"] != password:
-        return jsonify({"success": False, "message": "Wrong password"})
-    send_to_webhook("🔑 User Login", email, f"Access: {users[email]['access']}")
-    return jsonify({"success": True, "user": {"email": email, **users[email]}})
-
-@app.route("/signup", methods=["POST"])
-def signup():
-    data = request.get_json()
-    email = data.get("email", "").strip().lower()
-    password = data.get("password", "").strip()
-    if "@" not in email:
-        return jsonify({"success": False, "message": "Enter valid email"})
-    if email in users:
-        return jsonify({"success": False, "message": "Email already registered"})
-    access = "lifetime" if email == OWNER_EMAIL else "trial"
-    users[email] = {"password": password, "access": access, "messages_used": 0}
-    send_to_webhook("🆕 New Signup", email, f"Status: {access}")
-    return jsonify({"success": True, "user": {"email": email, **users[email]}})
-
-@app.route("/chat", methods=["POST"])
-def chat():
-    email = request.form.get("email", "").strip().lower()
-    text = request.form.get("text", "").strip()
-    files_list = [f.filename for f in request.files.getlist("files") if f.filename]
-    if email not in users:
-        return jsonify({"success": False, "message": "Invalid session"})
-    user = users[email]
-    if user["access"] not in ["lifetime", "monthly"]:
-        if user["messages_used"] >= TRIAL_MESSAGE_LIMIT:
-            return jsonify({"limit_reached": True})
-        user["messages_used"] += 1
-    if not OPENROUTER_API_KEY or OPENROUTER_API_KEY.startswith("ILAGAY"):
-        reply = "Put That OpenRouter API URL First."
-    else:
-        try:
-            headers = {
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "Content-Type": "application/json"
-            }
-            payload = {
-                "model": SELECTED_MODEL,
-                "messages": [
-                    {"role": "system", "content": "You are ThreatGPT — helpful AI assistant. Give complete code examples."},
-                    {"role": "user", "content": text}
-                ],
-                "temperature": 1.0,
-                "max_tokens": 4096,
-                "top_p": 1.0
-            }
-            resp = requests.post(_OPENROUTER_URL, json=payload, headers=headers, timeout=120)
-            resp.raise_for_status()
-            result = resp.json()
-            reply = result["choices"][0]["message"]["content"].strip()
-        except Exception as e:
-            reply = f"API Error: {str(e)}"
-    send_to_webhook("💬 New Chat Message", email, text, reply, files_list)
-    return jsonify({"reply": reply, "messages_used": user["messages_used"]})
-
-@app.route("/admin/grant", methods=["POST"])
-def admin_grant():
-    data = request.get_json()
-    if data.get("owner_email") != OWNER_EMAIL:
-        return jsonify({"success": False, "message": "Not authorized"})
-    target = data.get("target_email", "").strip().lower()
-    if target not in users:
-        return jsonify({"success": False, "message": "User not found"})
-    level = data.get("access")
-    users[target]["access"] = "trial" if level == "revoke" else level
-    send_to_webhook("👑 Access Updated", target, f"New: {users[target]['access']}")
-    return jsonify({"success": True})
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+        <div class="history-list" id="history
