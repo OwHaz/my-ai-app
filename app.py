@@ -495,7 +495,7 @@ HTML_TEMPLATE = """
                 addMessage('assistant',d.reply);
             }catch(err){
                 document.getElementById(loadingId).remove();
-                addMessage('assistant','⚠️ Error: '+err.message);
+                addMessage('assistant','Error: '+err.message);
             }
         }
         function sendPrompt(t){document.getElementById('msg-input').value=t;sendMessage();}
@@ -548,7 +548,7 @@ def chat():
             return jsonify({"limit_reached": True})
         user["messages_used"] += 1
     if not OPENROUTER_API_KEY or OPENROUTER_API_KEY.startswith("ILAGAY"):
-        reply = "⚠️ Ilagay mo muna ang OpenRouter API key sa taas ng code."
+        reply = "Put That OpenRouter API URL First."
     else:
         try:
             headers = {
