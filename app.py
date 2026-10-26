@@ -14,12 +14,10 @@ WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "").strip()
 SELECTED_MODEL = "meta-llama/llama-3-8b-instruct"
 OWNER_EMAIL = "blahlhamara@gmail.com"
 TRIAL_MESSAGE_LIMIT = 3
+APP_NAME = "ThreatGPT"
 
 # ✅ TAMA ANG URL — WALANG DAGDAG NA / SA DULO
 _OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
-
-# ✅ ILAGAY MO DITO ANG DETALYE NG APP MO
-APP_NAME = "ThreatGPT"
 # ==============================================
 
 users = {}
@@ -219,5 +217,4 @@ HTML_TEMPLATE = """
     <aside class="sidebar">
         <div class="logo">ThreatGPT</div>
         <button class="new-chat-btn" onclick="newChat()">+ New Chat</button>
-        <input type="text" class="search-input" id="search-history" placeholder="Search..." oninput="filterHistory()">
-        <div class="history-list" id="history
+        <input type="text" class="search-input" id="search-history" placeholder="
