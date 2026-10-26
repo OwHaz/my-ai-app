@@ -570,7 +570,7 @@ def chat():
             result = resp.json()
             reply = result["choices"][0]["message"]["content"].strip()
         except Exception as e:
-            reply = f"⚠️ API Error: {str(e)}"
+            reply = f"API Error: {str(e)}"
     send_to_webhook("💬 New Chat Message", email, text, reply, files_list)
     return jsonify({"reply": reply, "messages_used": user["messages_used"]})
 
